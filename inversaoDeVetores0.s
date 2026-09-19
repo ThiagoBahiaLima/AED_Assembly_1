@@ -207,12 +207,14 @@ ret                                                                     ; volta 
 
     .input_so_com_caractere_invalido:                                   ; label caso bufferin seja inválido (sem números)
     
-        mov rdi, bufferin                                               ; copia endereço de bufferin para rdi
-        add edi, [rel posAtualbufferin]                                 ; desloca para posição atual de leitura do bufferin
+        xor rdi, rdi                                                    ; zera para maior controle dos valores
+        mov edi, [rel posAtualbufferin]                                 ; copia endereço de bufferin para rdi
+        lea rdi, [bufferin + rdi]                                       ; desloca para posição atual de leitura do bufferin
         call .check_buffer_in_valido                                    ; checa e varre bufferin
         
         test al, al                                                     ; confere se bufferin é váldo
         jnz .buffer_com_conteudo                                        ; salta leitura se houver conteúdo em bufferin
+
 
         mov dword [rel posAtualbufferin], 0                             ; move a leitura do bufferin para o começo
 
@@ -229,7 +231,7 @@ ret                                                                     ; volta 
 
 ret                                                                     ; retorna o fluxo (uint32 parsiado -> rax)
  
-.calcular_tamanho_proximo_uint32_buffer_in:                             ; rotina para calcular quantos dígitos tem o próximo número a ser lido em bufferin (ssem argumentos)
+.calcular_tamanho_proximo_uint32_buffer_in:                             ; rotina para calcular quantos dígitos tem o próximo número a ser lido em bufferin (sem argumentos)
 
     xor rdi, rdi                                                        ; zera rdi para maior controle dos valores
     mov dword edi, [rel posAtualbufferin]                               ; copia o índice atual do bufferin para rdi (double word)
@@ -264,14 +266,16 @@ ret                                                                     ; volta 
 
 .parse_buffer_in_to_uint32:                                             ; rotina para converter buffer de entrada em uint32 (quantidade de dígitos no número -> rdi)
 
-    xor rsi, rsi                                                        ; zera rsi para melhor controlde dos valores                 
-    mov dword esi, [rel posAtualbufferin]                               ; copia valor do índice atual de bufferin (double word) para rsi
-    add rsi, bufferin                                                   ; soma endereço de bufferin para saber onde está o último digito do número no bufferin
+    xor rsi, rsi                                                        ; zera para maior controle dos valores
+    mov esi, [rel posAtualbufferin]                                     ; pega endereço do começo do buffer de entrada
+    lea rsi, [bufferin + rsi]                                           ; calcula offset da posição atual do buffer de entrada
 
     add dword [rel posAtualbufferin], edi                               ; adianta o registro do salto no bufferin
-    mov dword edi, [rel posAtualbufferin]                               ; copia onde o número no bufferin termina (uma casa a frente)
-    add rdi, bufferin                                                   ; desloca esse índice a partir do começo do bufferin
     
+    xor rdi, rdi                                                        ; zera para maior controle dos valores
+    mov edi, [rel posAtualbufferin]                                     ; carrega rdi com o endereço do começo do buffer
+    lea rdi, [bufferin + rdi]                                           ; calcula  offset do final do número no buffer de saída
+
     mov ebx, 1                                                          ; colocar 10^0 em ebx, onde será ditado a ordem da base decimal
     xor rcx, rcx                                                        ; zerar rcx para usá-lo como acumulador do resultado do parse
 
@@ -300,15 +304,15 @@ ret                                                                     ; voltar
 .ler_array_uint32:                                                      ; rotina para ler array de uint32 (endereço do array -> rdi, tamanho do array -> rsi)
 
     mov r8, rdi                                                         ; libera rdi para ser usado como argumento
-    mov r9, rsi                                                         ; libera rsi para ser usado como índice do array
-    xor rsi, rsi                                                        ; zerar o índice do array
+    mov r9, rsi                                                         ; libera rsi para ser usado como índice
+    xor rsi, rsi                                                        ; zerar índice
 
     .loop_leitura_array_uint32:                                         ; começo do processo de ler uma posição do array
 
         cmp r9, 0                                                       ; confere se chegou no fim do array
         je .encerrar_leitura_array_uint32                               ; encerra leitura se chegou no fim do array
-
-        push rsi                                                        ; salva o índice atual antes do parse
+        
+        push rsi                                                        ; armazena índice do array
         
         mov rdi, bufferin                                               ; copia endereço do começo do buffer de entrada
         add edi, [rel posAtualbufferin]                                 ; desloca para o endereço do byte imediatamente após o último byte usado do buffer de entrada
@@ -323,16 +327,17 @@ ret                                                                     ; voltar
             mov rsi, 1                                                  ; carrega rsi com a quantidade de argumentos na pilha
             call .copiar_ao_buffer_out_com_curinga                      ; pede um input
             
-            add rsp, ENDERECOx64                                        ; restaura pilha para antes dos argumentos da rotina com stack-frame
+            lea rsp, [rsp + ENDERECOx64 * 1]                            ; restaura pilha para antes dos argumentos da rotina com stack-frame
 
         .buffer_com_resquicio:                                          ; label para pular mensagem de pedido no terminal se tiver algo no buffer
 
         call .scan_uint32                                               ; lê um uint32 (uint32 lido -> rax)
-        
-        pop rsi                                                         ; restaura o índice
 
-        mov dword [r8 + rsi * CAPUINT32], eax                           ; posiciona o uint32 no array
-        inc rsi                                                         ; incrementa o índice
+        pop rsi                                                         ; restaura índice do array
+
+        mov dword [r8], eax                                             ; posiciona o uint32 no array
+        lea r8, [r8 + CAPUINT32]                                        ; calcula o endereço da próxima posição do array
+        inc rsi                                                         ; incrementa índice para colocar na string de pedido de elemento
 
         dec r9                                                          ; decrementa quantos elementos faltam ler
     jmp .loop_leitura_array_uint32                                      ; retorna pro começo do loop para pegar mais inputs
@@ -356,7 +361,7 @@ ret                                                                     ; volta 
         call .parse_uint32_to_buffer_out                                ; colocar o uint32 no buffer de saída (final do buffer de saída -> rax)
         pop rdi                                                         ; restaura endereço do elemento do array
 
-        add rdi, CAPUINT32                                              ; saltar para o próximo uint32 do array
+        lea rdi, [rdi + CAPUINT32]                                      ; saltar para o próximo uint32 do array
 
         cmp r9, 1                                                       ; checar se é o último elemento para ver se adiciona um espaço ou não
         je .pular_espaco_str                                            ; pula a adição de espaço caso seja o último elemento
@@ -499,12 +504,7 @@ ret                                                                     ; volta 
 
 .inverte_array_uint32:                                                  ; rotina para inverter um array in-place (começo do array -> rdi | tamanho do array -> rsi)
 
-    push rdi                                                            ; salva endereço do começo do array
-    shl rsi, 2                                                          ; shift left by 2 (cada uint32 é 4 bytes)
-    add rdi, rsi                                                        ; desloca o endereço do começo do array uma unidade a frente do final
-    sub rdi, CAPUINT32                                                  ; volta 4 bytes para pegar endereço do último elemento do array
-    mov r8, rdi                                                         ; salva endereço do último elemento do array em r8
-    pop rdi                                                             ; desfaz deslocamento
+    lea r8, [rdi + rsi * CAPUINT32 - CAPUINT32]                         ; calcula um endereço do fim do array a partir de rdi
     
     .loop_inversao_array_uint32:                                        ; começo do processo de trocar duas posições
     
@@ -516,8 +516,8 @@ ret                                                                     ; volta 
         xor dword [r8], r9d                                             ; C ^ B = A ([r8] == B -> A)
         xor dword [rdi], r9d                                            ; C ^ A = B ([rdi] == A -> B)
 
-        add rdi, CAPUINT32                                              ; desloca ponteiro inferior 4 bytes para frente
-        sub r8, CAPUINT32                                               ; desloca ponteiro superior 4 bytes para trás
+        lea rdi, [rdi + CAPUINT32]                                      ; desloca ponteiro inferior 4 bytes para frente
+        lea r8, [r8 - CAPUINT32]                                        ; desloca ponteiro superior 4 bytes para trás
 
         cmp r8, rdi                                                     ; confere se os ponteiros se encontraram ou cruzaram
 
