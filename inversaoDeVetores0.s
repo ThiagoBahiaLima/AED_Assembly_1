@@ -44,7 +44,7 @@
 
 %macro alloc_array_uint32 2                    ; macro para alocar um array de uint32 (1 - onde salvar o endereço do começo do array | 2 - quantos uint32 alocar)
 
-    xor rax, rax                               ; zerar rax para maior controle dos valores
+    ;xor rax, rax                               ; zerar rax para maior controle dos valores
     mov dword eax, %2                          ; colocar a quantidade de uint32 em rax (double word)
     shl rax, 2                                 ; shift left by 2 (múltiplica por 2^2 o rax, pois 1 uint32 é 4 bytes)
     sub rsp, rax                               ; subtrai quantos bytes o array vai ocupar do stack pointer
@@ -106,10 +106,10 @@ _start:                                                         ; entry point do
 
     call .scan_uint32                                           ; lê um uint32 (uint32 lido -> rax)
 
-    cmp dword eax, 0                                            ; confere se tamanho do array é nulo
+    cmp eax, 0                                                  ; confere se tamanho do array é nulo
 je .tamanho_invalido                                            ; volta para fazer releitura caso tamanho seja nulo
 
-mov dword [rel tamanhoArray], eax                               ; salva o tamanho do array na memória
+mov [rel tamanhoArray], eax                                     ; salva o tamanho do array na memória
 alloc_array_uint32 [rel array], [rel tamanhoArray]              ; desloca o stack pointer register para alocar o array e salva o endereço na memória (var array)
 
 mov rdi, quebraLinha                                            ; carrega rdi com o começo da mensagem a ser escrita
@@ -117,8 +117,7 @@ mov rsi, lenQuebraLinha                                         ; carrega rsi co
 call .insta_print                            
 
 mov rdi, [rel array]                                            ; carrega rdi com o endereço do primeiro uint32 do array
-xor rsi, rsi                                                    ; zera rsi para maior controle dos valores
-mov dword esi, [rel tamanhoArray]                               ; carrega rsi (double word) com o tamanho do array
+mov esi, [rel tamanhoArray]                                     ; carrega rsi (double word) com o tamanho do array
 call .ler_array_uint32                                          ; lê o array posição por posição
 
 mov rdi, quebraLinha                                            ; carrega rdi com o começo da mensagem a ser escrita
@@ -130,8 +129,7 @@ mov rsi, lenMsgArrayOriginal                                    ; carrega rsi co
 call .insta_print                                               ; escreve mensagem no terminal                  
 
 mov rdi, [rel array]                                            ; carrega rdi com o endereço do array
-xor rsi, rsi                                                    ; zera rsi para maior controle dos valores
-mov dword esi, [rel tamanhoArray]                               ; carrega rsi (double word) com o tamanho do array
+mov esi, [rel tamanhoArray]                                     ; carrega rsi (double word) com o tamanho do array
 call .parse_array_uint32_to_buffer_out                          ; posiciona elementos do array no buffer de saída
 
 call .flush_buffer_out                                          ; esvazia buffer de saída
@@ -141,8 +139,7 @@ mov rsi, lenQuebraLinha                                         ; carrega rsi co
 call .insta_print                                               ; escreve mensagem no terminal                            
 
 mov rdi, [rel array]                                            ; carrega rdi com o endereço do array
-xor rsi, rsi                                                    ; zera rsi para maior controle dos valores
-mov dword esi, [rel tamanhoArray]                               ; carrega rsi (double word) com o tamanho do array
+mov esi, [rel tamanhoArray]                                     ; carrega rsi (double word) com o tamanho do array
 call .inverte_array_uint32                                      ; inverte um array com algoritmo in-place
 
 mov rdi, msgArrayInvertido                                      ; carrega rdi com o começo da mensagem a ser escrita
@@ -150,8 +147,7 @@ mov rsi, lenMsgArrayInvertido                                   ; carrega rsi co
 call .insta_print                                               ; escreve mensagem no terminal               
 
 mov rdi, [rel array]                                            ; carrega rdi com o endereço do array
-xor rsi, rsi                                                    ; zera rsi para maior controle dos valores
-mov dword esi, [rel tamanhoArray]                               ; carrega rsi (double word) com o tamanho do array
+mov esi, [rel tamanhoArray]                                     ; carrega rsi (double word) com o tamanho do array
 call .parse_array_uint32_to_buffer_out                          ; posiciona elementos do array no buffer de saída
 
 call .flush_buffer_out                                          ; esvazia buffer de saída
@@ -192,7 +188,7 @@ ret                                                                     ; volta 
         jnz .valido                                                     ; encerra rotina se achar caractere válido
 
         inc rdi                                                         ; incrementa endereço para o próximo caractere
-        inc dword [rel posAtualbufferin]                                ; incrementa posição global do bufferin
+        inc [rel posAtualbufferin]                                      ; incrementa posição global do bufferin
     jmp .posicao_invalida                                               ; retorna para analizar próximo caractere
     .acabou_varredura:                                                  ; label caso chegue ao fim do bufferin sem caracteres válidos
     
@@ -207,7 +203,6 @@ ret                                                                     ; volta 
 
     .input_so_com_caractere_invalido:                                   ; label caso bufferin seja inválido (sem números)
     
-        xor rdi, rdi                                                    ; zera para maior controle dos valores
         mov edi, [rel posAtualbufferin]                                 ; copia endereço de bufferin para rdi
         lea rdi, [bufferin + rdi]                                       ; desloca para posição atual de leitura do bufferin
         call .check_buffer_in_valido                                    ; checa e varre bufferin
@@ -225,7 +220,6 @@ ret                                                                     ; volta 
 
     call .calcular_tamanho_proximo_uint32_buffer_in                     ; calcula quantos caracteres o próximo número do buffer tem (tamanho -> rax)
     
-    xor rdi, rdi                                                        ; zeera rdi para maior controle dos valores
     mov edi, eax                                                        ; copia quantidade de digitos no próximo número a ser lido em rdi (double word)
     call .parse_buffer_in_to_uint32                                     ; faz o parse do buffer de entrada para uint32 
 
@@ -233,8 +227,7 @@ ret                                                                     ; retorn
  
 .calcular_tamanho_proximo_uint32_buffer_in:                             ; rotina para calcular quantos dígitos tem o próximo número a ser lido em bufferin (sem argumentos)
 
-    xor rdi, rdi                                                        ; zera rdi para maior controle dos valores
-    mov dword edi, [rel posAtualbufferin]                               ; copia o índice atual do bufferin para rdi (double word)
+    mov edi, [rel posAtualbufferin]                                     ; copia o índice atual do bufferin para rdi (double word)
 
     .loop_contar_digitos:                                               ; loop para contar digitos do número
 
@@ -259,20 +252,18 @@ ret                                                                     ; retorn
     jmp .loop_contar_digitos                                            ; voltar para checar mais caracteres
     .parar_contagem:                                                    ; label para encerrar contagem se chegou ao fim do número
 
-    sub dword edi, [rel posAtualbufferin]                               ; tamanho = posição final - posição inicial
+    sub edi, [rel posAtualbufferin]                                     ; tamanho = posição final - posição inicial
     mov rax, rdi                                                        ; encaminha tamanho do número para registrador de retorno
 
 ret                                                                     ; volta ao fluxo (quantidade de dígitos no número -> rax)
 
 .parse_buffer_in_to_uint32:                                             ; rotina para converter buffer de entrada em uint32 (quantidade de dígitos no número -> rdi)
 
-    xor rsi, rsi                                                        ; zera para maior controle dos valores
     mov esi, [rel posAtualbufferin]                                     ; pega endereço do começo do buffer de entrada
     lea rsi, [bufferin + rsi]                                           ; calcula offset da posição atual do buffer de entrada
 
-    add dword [rel posAtualbufferin], edi                               ; adianta o registro do salto no bufferin
+    add [rel posAtualbufferin], edi                                     ; adianta o registro do salto no bufferin
     
-    xor rdi, rdi                                                        ; zera para maior controle dos valores
     mov edi, [rel posAtualbufferin]                                     ; carrega rdi com o endereço do começo do buffer
     lea rdi, [bufferin + rdi]                                           ; calcula  offset do final do número no buffer de saída
 
@@ -285,7 +276,7 @@ ret                                                                     ; volta 
 
         xor rax, rax                                                    ; zerar rax para usar em operações aritméticas
         
-        mov byte al, [rdi]                                              ; copiar caracter para al
+        mov al, [rdi]                                                   ; copiar caracter para al
         sub al, 48                                                      ; subtrair '0' de al para ter o valor concreto do número
         mul ebx                                                         ; multiplicar a potência de 10 atual (ebx) com o número atual (eax | al) 
         add ecx, eax                                                    ; adicionar o resultado da multiplicação no registrador de resultado
@@ -335,7 +326,7 @@ ret                                                                     ; voltar
 
         pop rsi                                                         ; restaura índice do array
 
-        mov dword [r8], eax                                             ; posiciona o uint32 no array
+        mov [r8], eax                                                   ; posiciona o uint32 no array
         lea r8, [r8 + CAPUINT32]                                        ; calcula o endereço da próxima posição do array
         inc rsi                                                         ; incrementa índice para colocar na string de pedido de elemento
 
@@ -348,8 +339,7 @@ ret                                                                     ; volta 
 .parse_array_uint32_to_buffer_out:                                      ; rotina para colocar array de uint32 no buffer de saída (endereço do array -> rdi, tamanho do array -> rsi)
 
     mov r9, rsi                                                         ; libera o rsi para ser usado como índice
-    xor rsi, rsi                                                        ; zerar rsi para maior controle dos valores
-    mov dword esi, [rel finalBufferOut]                                 ; carrega rsi (double word) com a quantidade de elementos no buffer de saída
+    mov esi, [rel finalBufferOut]                                       ; carrega rsi (double word) com a quantidade de elementos no buffer de saída
 
     .loop_colocar_uint32_buffer_out:                                    ; começo do loop de posicionar números no buffer de saída
 
@@ -368,7 +358,7 @@ ret                                                                     ; volta 
 
             call .evitar_buffer_out_overflow                            ; esvazia buffer de saída caso esteja cheio e zera registrador de controle atual do fim do buffer 
             mov byte [bufferout + rsi], ' '                             ; adiciona um espaço no buffer de saída
-            inc dword [rel finalBufferOut]                              ; incrementa o registro de final do buffer
+            inc [rel finalBufferOut]                                    ; incrementa o registro de final do buffer
             inc rsi                                                     ; salta para próxima posição livre do buffer
         
         .pular_espaco_str:                                              ; label para pular a adição de espaço
@@ -383,8 +373,7 @@ ret                                                                     ; volta 
 
 .parse_uint32_to_buffer_out:                                            ; rotina para pegar um uint32 e colocar no buffer de saída (uint32 -> rdi)
 
-    xor rsi, rsi                                                        ; zera rsi para maior controle dos valores
-    mov dword esi, [rel finalBufferOut]                                 ; carregar rsi (double word) com índice do final do buffer de saída para posicionar caracteres
+    mov esi, [rel finalBufferOut]                                       ; carregar rsi (double word) com índice do final do buffer de saída para posicionar caracteres
     mov rbx, 10                                                         ; mover 10 para rbx, preparando para divisões suscessivas por 10
 
     xor rax, rax                                                        ; zerar rax para maior controle dos valores a frente
@@ -393,10 +382,10 @@ ret                                                                     ; volta 
     .loop_pegar_digitos:                                                ; início da decomposição do uint32
 
         xor edx, edx                                                    ; 4 bytes superiores do uint32 em 8 bytes copiados para edx (é sempre 0)
-        mov dword eax, edi                                              ; 4 bytes inferiores do uint32 em 8 bytes copiados para eax
+        mov eax, edi                                                    ; 4 bytes inferiores do uint32 em 8 bytes copiados para eax
         div ebx                                                         ; divisão por 10 (edx:eax / ebx) | ebx == 10
 
-        mov dword edi, eax                                              ; copia o quociente para a posição do uint32
+        mov edi, eax                                                    ; copia o quociente para a posição do uint32
         add edx, 48                                                     ; adiciona 48 ao resto para sair de dígito para caracter
         push rdx                                                        ; salva o caracter na pilha
 
@@ -410,8 +399,8 @@ ret                                                                     ; volta 
 
         pop rax                                                         ; recolhe o caracter
         call .evitar_buffer_out_overflow                                ; esvazia buffer de saída caso esteja cheio e zera registrador de controle atual do fim do buffer
-        mov byte [bufferout + rsi], al                                  ; posiciona o caracter
-        inc dword [rel finalBufferOut]                                  ; incrementa o registro de final do buffer
+        mov [bufferout + rsi], al                                       ; posiciona o caracter
+        inc [rel finalBufferOut]                                        ; incrementa o registro de final do buffer
         inc rsi                                                         ; avança para próxima posição livre no buffer
 
     loop .loop_desempilhar_digitos                                      ; voltar para pegar o próximo caracter
@@ -436,8 +425,7 @@ ret                                                                     ; volta 
     inc rsi                                                             ; incrementa offset de argumentos para encontrar posição real na pilha pós-call
     mov r10, rsi                                                        ; copia offset para r10
     mov rdx, rdi                                                        ; libera rdi para ser usado como argummento depois
-    xor rsi, rsi                                                        ; zera rsi para maior controle dos valores
-    mov dword esi, [rel finalBufferOut]                                 ; carrega rsi com o índice final atual do buffer de saída
+    mov esi, [rel finalBufferOut]                                       ; carrega rsi com o índice final atual do buffer de saída
 
     .colocar_caracter:                                                  ; início da cópia de caracteres
 
@@ -460,9 +448,9 @@ ret                                                                     ; volta 
 
         .nao_curinga:                                                   ; label para pular substituição de curinga
 
-        mov byte al, [rdx]                                              ; copia caracter da string para al (mov memória, memória não é possível)
-        mov byte [bufferout + rsi], al                                  ; posiciona caracter no buffer de saída
-        inc dword [rel finalBufferOut]                                  ; incrementa contagem de caracteres no buffer
+        mov al, [rdx]                                                   ; copia caracter da string para al (mov memória, memória não é possível)
+        mov [bufferout + rsi], al                                       ; posiciona caracter no buffer de saída
+        inc [rel finalBufferOut]                                        ; incrementa contagem de caracteres no buffer
         inc rsi                                                         ; incrementa posição atual do buffer de saída
 
         inc rdx                                                         ; incrementa endereço do caracter da string
@@ -493,8 +481,7 @@ ret                                                                     ; volta 
     je .buffer_out_vazio                                                ; pula esvazziamento de buffer se não haver nada para printar
 
     mov rdi, bufferout                                                  ; carrega rdi com começo do buffer de saída
-    xor rsi, rsi                                                        ; zerar rsi para maior controle dos valores
-    mov dword esi, [rel finalBufferOut]                                 ; carrega rsi com quantidade de caracteres atual no buffer de saída
+    mov esi, [rel finalBufferOut]                                       ; carrega rsi com quantidade de caracteres atual no buffer de saída
     call .insta_print                                                   ; mostra buffer de saída na tela
 
     mov [rel finalBufferOut], 0                                         ; zerar a contagem de caracteres no buffer
@@ -511,10 +498,10 @@ ret                                                                     ; volta 
         cmp r8, rdi                                                     ; confere se os endereços de começo e fim são coerentes (fim > começo)
         jle .encerrar_inversao                                          ; encerra a inversão caso tenha os endereços não sejam válidos
 
-        mov dword r9d, [rdi]                                            ; A principio, copia-se [rdi] para r9d (r9d == [rdi] == A | [r8] == B)
-        xor dword r9d, [r8]                                             ; A ^ B = C (r9d == A -> C)
-        xor dword [r8], r9d                                             ; C ^ B = A ([r8] == B -> A)
-        xor dword [rdi], r9d                                            ; C ^ A = B ([rdi] == A -> B)
+        mov r9d, [rdi]                                                  ; A principio, copia-se [rdi] para r9d (r9d == [rdi] == A | [r8] == B)
+        xor r9d, [r8]                                                   ; A ^ B = C (r9d == A -> C)
+        xor [r8], r9d                                                   ; C ^ B = A ([r8] == B -> A)
+        xor [rdi], r9d                                                  ; C ^ A = B ([rdi] == A -> B)
 
         lea rdi, [rdi + CAPUINT32]                                      ; desloca ponteiro inferior 4 bytes para frente
         lea r8, [r8 - CAPUINT32]                                        ; desloca ponteiro superior 4 bytes para trás
