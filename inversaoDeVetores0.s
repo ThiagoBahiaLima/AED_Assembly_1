@@ -44,8 +44,7 @@
 
 %macro alloc_array_uint32 2                    ; macro para alocar um array de uint32 (1 - onde salvar o endereço do começo do array | 2 - quantos uint32 alocar)
 
-    ;xor rax, rax                               ; zerar rax para maior controle dos valores
-    mov dword eax, %2                          ; colocar a quantidade de uint32 em rax (double word)
+    mov eax, %2                                ; colocar a quantidade de uint32 em rax (double word)
     shl rax, 2                                 ; shift left by 2 (múltiplica por 2^2 o rax, pois 1 uint32 é 4 bytes)
     sub rsp, rax                               ; subtrai quantos bytes o array vai ocupar do stack pointer
     mov %1, rsp                                ; salva o endereço do começo do array no local especificado
